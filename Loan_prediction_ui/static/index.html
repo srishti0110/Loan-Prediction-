@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loan Approval Check</title>
+<style>
+  :root {
+    --ink: #16241f;
+    --paper: #f6f3ea;
+    --ledger: #dcd5c1;
+    --forest: #1f4d3a;
+    --forest-deep: #143528;
+    --gold: #a97a34;
+    --danger: #8c3a2b;
+    --ok: #1f4d3a;
+    --radius: 3px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Iowan Old Style', 'Georgia', serif;
+    line-height: 1.5;
+  }
+
+  .sheet {
+    max-width: 640px;
+    margin: 48px auto 80px;
+    padding: 0 24px;
+  }
+
+  .letterhead {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 20px;
+    margin-bottom: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .letterhead h1 {
+    font-size: 28px;
+    letter-spacing: 0.02em;
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .letterhead .ref {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #6b6455;
+    text-align: right;
+  }
+
+  .intro {
+    font-size: 14.5px;
+    color: #4a463b;
+    margin-bottom: 32px;
+  }
+
+  fieldset {
+    border: none;
+    border-top: 1px solid var(--ledger);
+    padding: 18px 0;
+    margin: 0;
+  }
+
+  fieldset:last-of-type { border-bottom: 1px solid var(--ledger); }
+
+  legend {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    padding: 0;
+    margin-bottom: 10px;
+  }
+
+  .field {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+
+  .field label.name {
+    flex: 0 0 190px;
+    font-size: 15px;
+  }
+
+  .field input[type="text"],
+  .field input[type="number"] {
+    flex: 1;
+    border: none;
+    border-bottom: 1px solid var(--ink);
+    background: transparent;
+    font-family: inherit;
+    font-size: 15px;
+    padding: 4px 2px;
+    color: var(--ink);
+  }
+
+  .field input[type="text"]:focus,
+  .field input[type="number"]:focus {
+    outline: none;
+    border-bottom: 2px solid var(--forest);
+  }
+
+  .options {
+    display: flex;
+    gap: 22px;
+    flex-wrap: wrap;
+  }
+
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14.5px;
+    cursor: pointer;
+  }
+
+  .option input {
+    accent-color: var(--forest);
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+  }
+
+  .option input:focus-visible {
+    outline: 2px solid var(--forest);
+    outline-offset: 2px;
+  }
+
+  .error-text {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--danger);
+    margin-top: 6px;
+    min-height: 14px;
+  }
+
+  .submit-row {
+    margin-top: 36px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  button[type="submit"] {
+    background: var(--forest);
+    color: var(--paper);
+    border: none;
+    font-family: 'Courier New', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 13px;
+    padding: 13px 28px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  button[type="submit"]:hover { background: var(--forest-deep); }
+  button[type="submit"]:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  button[type="submit"]:disabled { background: #9c9c8f; cursor: wait; }
+
+  .status {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #6b6455;
+  }
+
+  .verdict {
+    margin-top: 32px;
+    padding: 22px;
+    border: 1px solid var(--ink);
+    border-radius: var(--radius);
+    display: none;
+  }
+
+  .verdict.show { display: block; }
+
+  .verdict .stamp {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .verdict.approved { border-color: var(--ok); background: #eef3ec; }
+  .verdict.approved .stamp { color: var(--ok); }
+  .verdict.denied { border-color: var(--danger); background: #f4ece9; }
+  .verdict.denied .stamp { color: var(--danger); }
+  .verdict.failed { border-color: var(--danger); background: #f4ece9; }
+  .verdict.failed .stamp { color: var(--danger); }
+
+  .verdict .headline {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+
+  .verdict .detail {
+    font-size: 13.5px;
+    color: #4a463b;
+    margin: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .verdict.show { animation: rise 0.25s ease-out; }
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 480px) {
+    .field { flex-direction: column; align-items: stretch; gap: 6px; }
+    .field label.name { flex: none; }
+  }
+</style>
+</head>
+<body>
+
+<main class="sheet">
+  <div class="letterhead">
+    <h1>Loan Approval Check</h1>
+    <div class="ref">FORM&nbsp;LP-01</div>
+  </div>
+
+  <p class="intro">
+    Enter the applicant's details below. The figures are run through our
+    underwriting model, and a decision is returned immediately.
+  </p>
+
+  <form id="loan-form" novalidate>
+
+    <fieldset>
+      <legend>Applicant</legend>
+      <div class="field">
+        <label class="name" for="loan-id">Loan reference ID</label>
+        <input type="text" id="loan-id" placeholder="e.g. LP-2044">
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Gender</legend>
+      <div class="options" role="radiogroup" aria-label="Gender">
+        <label class="option"><input type="radio" name="gender" value="Male" required> Male</label>
+        <label class="option"><input type="radio" name="gender" value="Female"> Female</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Marital status</legend>
+      <div class="options" role="radiogroup" aria-label="Marital status">
+        <label class="option"><input type="radio" name="married" value="Yes" required> Married</label>
+        <label class="option"><input type="radio" name="married" value="No"> Not married</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Education</legend>
+      <div class="options" role="radiogroup" aria-label="Education">
+        <label class="option"><input type="radio" name="education" value="Graduate" required> Graduate</label>
+        <label class="option"><input type="radio" name="education" value="Not Graduate"> Not a graduate</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Employment status</legend>
+      <div class="options" role="radiogroup" aria-label="Employment status">
+        <label class="option"><input type="radio" name="employment" value="Yes" required> Self-employed</label>
+        <label class="option"><input type="radio" name="employment" value="No"> Not self-employed</label>
+        <label class="option"><input type="radio" name="employment" value="Unknown"> Prefer not to say</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Finances</legend>
+      <div class="field" style="margin-bottom:14px;">
+        <label class="name" for="income">Annual income</label>
+        <input type="number" id="income" min="0" step="1" placeholder="e.g. 50000" required>
+      </div>
+      <div class="field" style="margin-bottom:14px;">
+        <label class="name" for="loan-amount">Loan amount requested</label>
+        <input type="number" id="loan-amount" min="0" step="1" placeholder="e.g. 150000" required>
+      </div>
+      <div class="field">
+        <label class="name" for="loan-term">Loan term (months)</label>
+        <input type="number" id="loan-term" min="0" step="1" placeholder="e.g. 360" required>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Credit history</legend>
+      <div class="options" role="radiogroup" aria-label="Credit history">
+        <label class="option"><input type="radio" name="credit" value="1" required> Good standing</label>
+        <label class="option"><input type="radio" name="credit" value="0"> Poor / no history</label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Property area</legend>
+      <div class="options" role="radiogroup" aria-label="Property area">
+        <label class="option"><input type="radio" name="property" value="Urban" required> Urban</label>
+        <label class="option"><input type="radio" name="property" value="Semiurban"> Semiurban</label>
+        <label class="option"><input type="radio" name="property" value="Rural"> Rural</label>
+      </div>
+    </fieldset>
+
+    <p class="error-text" id="form-error" role="alert"></p>
+
+    <div class="submit-row">
+      <button type="submit" id="submit-btn">Check eligibility</button>
+      <span class="status" id="status-text"></span>
+    </div>
+  </form>
+
+  <div class="verdict" id="verdict">
+    <p class="stamp" id="verdict-stamp"></p>
+    <p class="headline" id="verdict-headline"></p>
+    <p class="detail" id="verdict-detail"></p>
+  </div>
+</main>
+
+<script>
+  const form = document.getElementById('loan-form');
+  const errorText = document.getElementById('form-error');
+  const statusText = document.getElementById('status-text');
+  const submitBtn = document.getElementById('submit-btn');
+  const verdict = document.getElementById('verdict');
+  const verdictStamp = document.getElementById('verdict-stamp');
+  const verdictHeadline = document.getElementById('verdict-headline');
+  const verdictDetail = document.getElementById('verdict-detail');
+
+  function getRadioValue(name) {
+    const el = form.querySelector(`input[name="${name}"]:checked`);
+    return el ? el.value : null;
+  }
+
+  function showVerdict(kind, stamp, headline, detail) {
+    verdict.className = `verdict show ${kind}`;
+    verdictStamp.textContent = stamp;
+    verdictHeadline.textContent = headline;
+    verdictDetail.textContent = detail;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorText.textContent = '';
+    verdict.className = 'verdict';
+
+    const gender = getRadioValue('gender');
+    const married = getRadioValue('married');
+    const education = getRadioValue('education');
+    const employment = getRadioValue('employment');
+    const credit = getRadioValue('credit');
+    const property = getRadioValue('property');
+    const income = document.getElementById('income').value;
+    const loanAmount = document.getElementById('loan-amount').value;
+    const loanTerm = document.getElementById('loan-term').value;
+
+    const missing = [];
+    if (!gender) missing.push('Gender');
+    if (!married) missing.push('Marital status');
+    if (!education) missing.push('Education');
+    if (!employment) missing.push('Employment status');
+    if (!credit) missing.push('Credit history');
+    if (!property) missing.push('Property area');
+    if (income === '') missing.push('Annual income');
+    if (loanAmount === '') missing.push('Loan amount');
+    if (loanTerm === '') missing.push('Loan term');
+
+    if (missing.length) {
+      errorText.textContent = `Missing: ${missing.join(', ')}.`;
+      return;
+    }
+
+    // Order must match EXPECTED_COLUMNS in the backend:
+    // Gender, Married, Education, Employment_Status, Annual_Income,
+    // Loan_Amount, Loan_Amount_Term, Credit_History, Property_Area
+    const payload = {
+      data: [
+        gender,
+        married,
+        education,
+        employment,
+        Number(income),
+        Number(loanAmount),
+        Number(loanTerm),
+        Number(credit),
+        property
+      ]
+    };
+
+    submitBtn.disabled = true;
+    statusText.textContent = 'Running the numbers…';
+
+    try {
+      const res = await fetch('/api/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const result = await res.json();
+
+      if (result.error) {
+        showVerdict('failed', 'Not processed', 'Something went wrong', result.error);
+      } else if (result.prediction === 1) {
+        showVerdict('approved', 'Decision', 'Loan approved', 'The application meets the criteria for approval.');
+      } else {
+        showVerdict('denied', 'Decision', 'Loan not approved', 'The application does not currently meet the criteria for approval.');
+      }
+    } catch (err) {
+      showVerdict('failed', 'Not processed', 'Could not reach the server', 'Check your connection and try again.');
+    } finally {
+      submitBtn.disabled = false;
+      statusText.textContent = '';
+    }
+  });
+</script>
+
+</body>
+</html>
